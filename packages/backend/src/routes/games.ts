@@ -14,7 +14,7 @@ export function createGamesRouter(db: D1Database) {
   router.get('/sessions', async (c) => {
     try {
       const sessions = await getActiveGameSessions(db, 50);
-      const response: ApiResponse<any[]> = {
+      const response: ApiResponse<GameSession[]> = {
         success: true,
         data: sessions.map(session => ({
           ...session,
@@ -23,8 +23,7 @@ export function createGamesRouter(db: D1Database) {
         }))
       };
       return c.json(response);
-    } catch (error) {
-      console.error('Get sessions error:', error);
+    } catch (_error) {
       return c.json(
         { success: false, error: 'Internal server error' },
         500

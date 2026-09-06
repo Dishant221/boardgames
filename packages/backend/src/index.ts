@@ -74,13 +74,11 @@ export default {
     });
 
     // Error handler
-    app.onError((err, c) => {
-      console.error('Unhandled error:', err);
+    app.onError((_err, c) => {
       return c.json(
         {
           success: false,
-          error: 'Internal server error',
-          message: err.message
+          error: 'Internal server error'
         },
         500
       );

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { sign } from 'bcryptjs';
+import { hash } from 'bcryptjs';
 import { D1Database } from '@cloudflare/workers-types';
 import { generateToken } from '../utils/jwt';
 import {
@@ -52,7 +52,7 @@ export function createAuthRouter(db: D1Database) {
       }
 
       // Hash password
-      const passwordHash = await sign(password, 10);
+      const passwordHash = await hash(password, 10);
 
       // Create user
       const userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -64,7 +64,7 @@ export function createAuthRouter(db: D1Database) {
       // Generate token
       const token = generateToken({ userId, email, username });
 
-      const response: ApiResponse<{ token: string; user: any }> = {
+      const response: ApiResponse<{ token: string; user: Omit<User, 'password_hash'> }> = {
         success: true,
         data: {
           token,
@@ -77,8 +77,7 @@ export function createAuthRouter(db: D1Database) {
       };
 
       return c.json(response, 201);
-    } catch (error) {
-      console.error('Signup error:', error);
+    } catch (_error) {
       return c.json(
         { success: false, error: 'Internal server error' },
         500
@@ -123,7 +122,7 @@ export function createAuthRouter(db: D1Database) {
         username: user.username
       });
 
-      const response: ApiResponse<{ token: string; user: any }> = {
+      const response: ApiResponse<{ token: string; user: Omit<User, 'password_hash'> }> = {
         success: true,
         data: {
           token,
