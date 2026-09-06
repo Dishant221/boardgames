@@ -3,80 +3,6 @@ main = "src/index.ts"
 compatibility_date = "2024-09-06"
 account_id = "05607df215f6fbb6d85e742ca0e6bc59"
 
-# Production Environment
-[env.production]
-name = "boardgames-prod"
-routes = [
-  { pattern = "www.boardgamesepic.com/*", zone_name = "boardgamesepic.com" },
-  { pattern = "boardgamesepic.com/*", zone_name = "boardgamesepic.com" }
-]
-vars = { ENVIRONMENT = "production" }
-
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "boardgames-prod"
-database_id = ""
-
-[[env.production.kv_namespaces]]
-binding = "CACHE"
-id = ""
-preview_id = ""
-
-[[env.production.r2_buckets]]
-binding = "ASSETS"
-bucket_name = "boardgames-assets"
-
-[[env.production.durable_objects.bindings]]
-name = "GAME_SESSION"
-class_name = "GameSession"
-script_name = "boardgames-prod"
-
-# Testing/Staging Environment
-[env.testing]
-name = "boardgames-testing"
-routes = [
-  { pattern = "test.boardgamesepic.com/*", zone_name = "boardgamesepic.com" }
-]
-vars = { ENVIRONMENT = "testing" }
-
-[[env.testing.d1_databases]]
-binding = "DB"
-database_name = "boardgames-testing"
-database_id = ""
-
-[[env.testing.kv_namespaces]]
-binding = "CACHE"
-id = ""
-preview_id = ""
-
-[[env.testing.r2_buckets]]
-binding = "ASSETS"
-bucket_name = "boardgames-assets-testing"
-
-[[env.testing.durable_objects.bindings]]
-name = "GAME_SESSION"
-class_name = "GameSession"
-script_name = "boardgames-testing"
-
-# Development Environment
-[env.development]
-vars = { ENVIRONMENT = "development" }
-
-[[env.development.d1_databases]]
-binding = "DB"
-database_name = "boardgames-dev"
-database_id = ""
-
-[[env.development.kv_namespaces]]
-binding = "CACHE"
-id = ""
-preview_id = ""
-
-[[env.development.durable_objects.bindings]]
-name = "GAME_SESSION"
-class_name = "GameSession"
-script_name = "boardgames-dev"
-
 # Build
 build = { command = "npm run build", cwd = "." }
 
@@ -89,10 +15,48 @@ compatibility_flags = [
 # Observability
 observability = { enabled = true }
 
+# NOTE: no `limits` (cpu_ms) - that field requires a paid Workers plan;
+# this project targets the Free tier.
+
 # Dev Server Config
 [dev]
 ip = "0.0.0.0"
 port = 8787
 
-# Limits
-limits = { cpu_ms = 50 }
+# Production Environment
+# NOTE: no `routes` yet - boardgamesepic.com is not added as a zone on this
+# Cloudflare account. Deploys to the default *.workers.dev subdomain until
+# the domain is registered and added here.
+[env.production]
+name = "boardgames-prod"
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "boardgames-prod"
+database_id = "68ee73a5-b1bf-4fcc-bff9-3c319c8b368d"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "d4d532569c2940bd94cd97a252416323"
+
+# NOTE: R2 bucket bindings removed until R2 is enabled on this account
+# (requires a one-time manual acceptance in the Cloudflare dashboard).
+
+# NOTE: Durable Objects binding removed - the GameSession class referenced
+# here was never implemented in src/. Add it back (with a [[migrations]]
+# entry) once real-time multiplayer via Durable Objects is built.
+
+# Testing/Staging Environment
+[env.testing]
+name = "boardgames-testing"
+vars = { ENVIRONMENT = "testing" }
+
+[[env.testing.d1_databases]]
+binding = "DB"
+database_name = "boardgames-testing"
+database_id = "9e7a814c-2679-4df2-b936-55d3eed0d9f4"
+
+[[env.testing.kv_namespaces]]
+binding = "CACHE"
+id = "93d06c02bb1a4e37aa66eb18d47d650a"
