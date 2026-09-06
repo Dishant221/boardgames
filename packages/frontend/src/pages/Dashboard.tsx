@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, type GamePlayer } from '../store/gameStore';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -149,7 +149,7 @@ export default function Dashboard() {
                   <div className="bg-gray-100 rounded p-2 mb-4">
                     <p className="text-xs font-bold text-gray-700">Players:</p>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {session.players.map((player: Record<string, unknown>) => (
+                      {session.players.map((player: GamePlayer) => (
                         <span
                           key={player.userId}
                           className={`inline-block w-3 h-3 rounded-full`}

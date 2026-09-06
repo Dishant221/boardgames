@@ -2,11 +2,22 @@ import { create } from 'zustand';
 import { AxiosError } from 'axios';
 import { gameApi } from '../utils/api';
 
+export interface GamePlayer {
+  userId: string;
+  username: string;
+  color: string;
+  position: number;
+  money: number;
+  properties: number[];
+  jailedTurns: number;
+  status: 'active' | 'bankrupt' | 'winner';
+}
+
 export interface GameSession {
   id: string;
   game_type: 'monopoly';
   status: 'waiting' | 'playing' | 'completed';
-  players: Record<string, unknown>[];
+  players: GamePlayer[];
   board_state: Record<string, unknown>;
   created_at: string;
   started_at?: string;

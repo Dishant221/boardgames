@@ -1,16 +1,8 @@
 import { Context, Next } from 'hono';
 import { extractToken, verifyToken } from '../utils/jwt';
-import { AuthPayload } from '../types';
+import { HonoEnv } from '../types';
 
-declare global {
-  namespace HonoRequest {
-    interface HonoRequest {
-      user?: AuthPayload;
-    }
-  }
-}
-
-export async function authMiddleware(c: Context, next: Next) {
+export async function authMiddleware(c: Context<HonoEnv>, next: Next) {
   const authHeader = c.req.header('Authorization');
   const token = extractToken(authHeader);
 
@@ -33,7 +25,7 @@ export async function authMiddleware(c: Context, next: Next) {
   await next();
 }
 
-export function optionalAuth(c: Context, next: Next) {
+export function optionalAuth(c: Context<HonoEnv>, next: Next) {
   const authHeader = c.req.header('Authorization');
   const token = extractToken(authHeader);
 
