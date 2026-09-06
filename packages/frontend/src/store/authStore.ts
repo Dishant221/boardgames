@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { AxiosError } from 'axios';
 import { authApi } from '../utils/api';
 
 export interface User {
@@ -34,8 +35,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
       const { token, user } = response.data.data;
       localStorage.setItem('authToken', token);
       set({ user, isAuthenticated: true });
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Signup failed';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Signup failed';
       set({ error: message });
       throw error;
     } finally {
@@ -50,8 +52,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
       const { token, user } = response.data.data;
       localStorage.setItem('authToken', token);
       set({ user, isAuthenticated: true });
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Login failed';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Login failed';
       set({ error: message });
       throw error;
     } finally {
