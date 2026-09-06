@@ -27,7 +27,8 @@ build/
 
 # Cloudflare
 .wrangler/
-wrangler.toml
+wrangler.toml.local
+wrangler.local.toml
 
 # Testing
 coverage/
