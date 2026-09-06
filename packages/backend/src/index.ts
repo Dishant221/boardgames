@@ -78,6 +78,6 @@ export default {
       );
     });
 
-    return app.fetch(request);
+    return app.fetch(request, env);
   }
 };

@@ -1,17 +1,24 @@
-import jwt from 'jsonwebtoken';
+import jwt from '@tsndr/cloudflare-worker-jwt';
 import { AuthPayload } from '../types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
-const JWT_EXPIRY = '24h';
+const JWT_EXPIRY_SECONDS = 60 * 60 * 24; // 24h
+export const DEV_JWT_SECRET = 'dev-secret-key-change-in-production';
 
-export function generateToken(payload: AuthPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+export async function generateToken(payload: AuthPayload, secret: string): Promise<string> {
+  return jwt.sign(
+    { ...payload, exp: Math.floor(Date.now() / 1000) + JWT_EXPIRY_SECONDS },
+    secret
+  );
 }
 
-export function verifyToken(token: string): AuthPayload | null {
+export async function verifyToken(token: string, secret: string): Promise<AuthPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as AuthPayload;
-  } catch (error) {
+    const isValid = await jwt.verify(token, secret);
+    if (!isValid) return null;
+
+    const { payload } = jwt.decode(token);
+    return payload as unknown as AuthPayload;
+  } catch (_error) {
     return null;
   }
 }

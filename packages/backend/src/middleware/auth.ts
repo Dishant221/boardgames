@@ -1,5 +1,5 @@
 import { Context, Next } from 'hono';
-import { extractToken, verifyToken } from '../utils/jwt';
+import { extractToken, verifyToken, DEV_JWT_SECRET } from '../utils/jwt';
 import { HonoEnv } from '../types';
 
 export async function authMiddleware(c: Context<HonoEnv>, next: Next) {
@@ -13,7 +13,7 @@ export async function authMiddleware(c: Context<HonoEnv>, next: Next) {
     );
   }
 
-  const payload = verifyToken(token);
+  const payload = await verifyToken(token, c.env.JWT_SECRET || DEV_JWT_SECRET);
   if (!payload) {
     return c.json(
       { success: false, error: 'Invalid or expired token' },
@@ -25,12 +25,12 @@ export async function authMiddleware(c: Context<HonoEnv>, next: Next) {
   await next();
 }
 
-export function optionalAuth(c: Context<HonoEnv>, next: Next) {
+export async function optionalAuth(c: Context<HonoEnv>, next: Next) {
   const authHeader = c.req.header('Authorization');
   const token = extractToken(authHeader);
 
   if (token) {
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token, c.env.JWT_SECRET || DEV_JWT_SECRET);
     if (payload) {
       c.set('user', payload);
     }
