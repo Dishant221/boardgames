@@ -3,47 +3,79 @@ main = "src/index.ts"
 compatibility_date = "2024-09-06"
 account_id = "05607df215f6fbb6d85e742ca0e6bc59"
 
-# Environment Variables
-env:
-  production:
-    name = "boardgames-prod"
-    routes = [
-      { pattern = "www.boardgamesepic.com/*", zone_name = "boardgamesepic.com" },
-      { pattern = "boardgamesepic.com/*", zone_name = "boardgamesepic.com" }
-    ]
-    vars = { ENVIRONMENT = "production" }
+# Production Environment
+[env.production]
+name = "boardgames-prod"
+routes = [
+  { pattern = "www.boardgamesepic.com/*", zone_name = "boardgamesepic.com" },
+  { pattern = "boardgamesepic.com/*", zone_name = "boardgamesepic.com" }
+]
+vars = { ENVIRONMENT = "production" }
 
-  testing:
-    name = "boardgames-testing"
-    routes = [
-      { pattern = "test.boardgamesepic.com/*", zone_name = "boardgamesepic.com" }
-    ]
-    vars = { ENVIRONMENT = "testing" }
-
-# Database Bindings (D1)
-[[d1_databases]]
+[[env.production.d1_databases]]
 binding = "DB"
 database_name = "boardgames-prod"
-database_id = "PLACEHOLDER_PROD_DB_ID"
-preview_database_id = "PLACEHOLDER_PREVIEW_DB_ID"
+database_id = ""
 
-# KV Namespaces (Caching)
-[[kv_namespaces]]
+[[env.production.kv_namespaces]]
 binding = "CACHE"
-id = "PLACEHOLDER_CACHE_KV_ID"
-preview_id = "PLACEHOLDER_CACHE_PREVIEW_ID"
+id = ""
+preview_id = ""
 
-# R2 Bucket (Asset Storage)
-[[r2_buckets]]
+[[env.production.r2_buckets]]
 binding = "ASSETS"
 bucket_name = "boardgames-assets"
-preview_bucket_name = "boardgames-assets-preview"
 
-# Durable Objects (Real-time Multiplayer)
-[[durable_objects.bindings]]
+[[env.production.durable_objects.bindings]]
 name = "GAME_SESSION"
 class_name = "GameSession"
-script_name = "boardgames-workers"
+script_name = "boardgames-prod"
+
+# Testing/Staging Environment
+[env.testing]
+name = "boardgames-testing"
+routes = [
+  { pattern = "test.boardgamesepic.com/*", zone_name = "boardgamesepic.com" }
+]
+vars = { ENVIRONMENT = "testing" }
+
+[[env.testing.d1_databases]]
+binding = "DB"
+database_name = "boardgames-testing"
+database_id = ""
+
+[[env.testing.kv_namespaces]]
+binding = "CACHE"
+id = ""
+preview_id = ""
+
+[[env.testing.r2_buckets]]
+binding = "ASSETS"
+bucket_name = "boardgames-assets-testing"
+
+[[env.testing.durable_objects.bindings]]
+name = "GAME_SESSION"
+class_name = "GameSession"
+script_name = "boardgames-testing"
+
+# Development Environment
+[env.development]
+vars = { ENVIRONMENT = "development" }
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "boardgames-dev"
+database_id = ""
+
+[[env.development.kv_namespaces]]
+binding = "CACHE"
+id = ""
+preview_id = ""
+
+[[env.development.durable_objects.bindings]]
+name = "GAME_SESSION"
+class_name = "GameSession"
+script_name = "boardgames-dev"
 
 # Build
 build = { command = "npm run build", cwd = "." }
