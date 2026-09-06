@@ -156,7 +156,7 @@ Cloudflare R2 (Assets)
 For issues and questions:
 1. Check existing GitHub issues
 2. Create new issue with detailed description
-3. Contact: dishant.totade@wisetechglobal.com
+3. Contact via GitHub Issues
 
 ## License
 

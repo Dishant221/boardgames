@@ -44,7 +44,7 @@ See [INCIDENT_RESPONSE.md](./INCIDENT_RESPONSE.md) for procedures.
 
 To report security vulnerabilities:
 1. **Do NOT** create public GitHub issues
-2. Email: security@boardgamesepic.com
+2. Use GitHub's private security advisory feature
 3. Include: Description, reproduction steps, impact assessment
 
 We will respond within 24 hours.
