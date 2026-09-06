@@ -6,10 +6,10 @@ import {
   createGameSession,
   updateGameSession
 } from '../utils/db';
-import { CreateGameRequest, GameSession, ApiResponse } from '../types';
+import { CreateGameRequest, GameSession, GamePlayer, MonopolyBoardState, ApiResponse, HonoEnv } from '../types';
 
 export function createGamesRouter(db: D1Database) {
-  const router = new Hono();
+  const router = new Hono<HonoEnv>();
 
   router.get('/sessions', async (c) => {
     try {
@@ -61,7 +61,7 @@ export function createGamesRouter(db: D1Database) {
       const sessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
       // Initialize game state
-      const players = [
+      const players: GamePlayer[] = [
         {
           userId: user.userId,
           username: user.username,
@@ -74,7 +74,7 @@ export function createGamesRouter(db: D1Database) {
         }
       ];
 
-      const boardState = {
+      const boardState: MonopolyBoardState = {
         currentPlayerIndex: 0,
         diceRolls: [0, 0],
         turnHistory: [],
@@ -97,7 +97,7 @@ export function createGamesRouter(db: D1Database) {
         JSON.stringify(boardState)
       );
 
-      const response: ApiResponse<any> = {
+      const response: ApiResponse<GameSession> = {
         success: true,
         data: {
           id: sessionId,
@@ -110,8 +110,7 @@ export function createGamesRouter(db: D1Database) {
       };
 
       return c.json(response, 201);
-    } catch (error) {
-      console.error('Create session error:', error);
+    } catch (_error) {
       return c.json(
         { success: false, error: 'Internal server error' },
         500
@@ -131,7 +130,7 @@ export function createGamesRouter(db: D1Database) {
         );
       }
 
-      const response: ApiResponse<any> = {
+      const response: ApiResponse<GameSession> = {
         success: true,
         data: {
           ...session,
@@ -141,8 +140,7 @@ export function createGamesRouter(db: D1Database) {
       };
 
       return c.json(response);
-    } catch (error) {
-      console.error('Get session error:', error);
+    } catch (_error) {
       return c.json(
         { success: false, error: 'Internal server error' },
         500
@@ -177,9 +175,9 @@ export function createGamesRouter(db: D1Database) {
         );
       }
 
-      const players = JSON.parse(session.players);
+      const players: GamePlayer[] = JSON.parse(session.players);
       const colors = ['red', 'blue', 'yellow', 'green'];
-      const usedColors = players.map((p: any) => p.color);
+      const usedColors = players.map((p) => p.color);
       const availableColor = colors.find(c => !usedColors.includes(c));
 
       if (!availableColor) {
@@ -190,7 +188,7 @@ export function createGamesRouter(db: D1Database) {
       }
 
       // Check if user already in game
-      if (players.some((p: any) => p.userId === user.userId)) {
+      if (players.some((p) => p.userId === user.userId)) {
         return c.json(
           { success: false, error: 'Already in this game' },
           400
@@ -212,10 +210,12 @@ export function createGamesRouter(db: D1Database) {
         db,
         sessionId,
         'waiting',
-        session.board_state
+        session.board_state,
+        undefined,
+        JSON.stringify(players)
       );
 
-      const response: ApiResponse<any> = {
+      const response: ApiResponse<GameSession> = {
         success: true,
         data: {
           ...session,
@@ -225,8 +225,7 @@ export function createGamesRouter(db: D1Database) {
       };
 
       return c.json(response);
-    } catch (error) {
-      console.error('Join session error:', error);
+    } catch (_error) {
       return c.json(
         { success: false, error: 'Internal server error' },
         500
