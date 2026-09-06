@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, type GamePlayer } from '../store/gameStore';
 
 export default function Game() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -82,7 +82,7 @@ export default function Game() {
           <div className="mb-8">
             <h3 className="text-lg font-bold mb-4">Players ({currentSession.players.length}/4)</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {currentSession.players.map((player: any) => (
+              {currentSession.players.map((player: GamePlayer) => (
                 <div
                   key={player.userId}
                   className="border-2 rounded-lg p-4"

@@ -1,12 +1,24 @@
 import { create } from 'zustand';
+import { AxiosError } from 'axios';
 import { gameApi } from '../utils/api';
+
+export interface GamePlayer {
+  userId: string;
+  username: string;
+  color: string;
+  position: number;
+  money: number;
+  properties: number[];
+  jailedTurns: number;
+  status: 'active' | 'bankrupt' | 'winner';
+}
 
 export interface GameSession {
   id: string;
   game_type: 'monopoly';
   status: 'waiting' | 'playing' | 'completed';
-  players: any[];
-  board_state: any;
+  players: GamePlayer[];
+  board_state: Record<string, unknown>;
   created_at: string;
   started_at?: string;
   ended_at?: string;
@@ -38,8 +50,9 @@ export const useGameStore = create<GameStore>((set) => ({
       set({ isLoading: true, error: null });
       const response = await gameApi.listSessions();
       set({ sessions: response.data.data });
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Failed to fetch sessions';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Failed to fetch sessions';
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -51,8 +64,9 @@ export const useGameStore = create<GameStore>((set) => ({
       set({ isLoading: true, error: null });
       const response = await gameApi.getSession(id);
       set({ currentSession: response.data.data });
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Failed to fetch session';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Failed to fetch session';
       set({ error: message });
     } finally {
       set({ isLoading: false });
@@ -69,8 +83,9 @@ export const useGameStore = create<GameStore>((set) => ({
         currentSession: newSession
       }));
       return newSession.id;
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Failed to create session';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Failed to create session';
       set({ error: message });
       throw error;
     } finally {
@@ -83,8 +98,9 @@ export const useGameStore = create<GameStore>((set) => ({
       set({ isLoading: true, error: null });
       const response = await gameApi.joinSession(sessionId);
       set({ currentSession: response.data.data });
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Failed to join session';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError;
+      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Failed to join session';
       set({ error: message });
       throw error;
     } finally {

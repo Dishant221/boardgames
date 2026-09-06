@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx",
     "type-check": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "react": "^18.2.0",

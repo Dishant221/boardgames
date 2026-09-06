@@ -1,20 +1,14 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { D1Database } from '@cloudflare/workers-types';
 import { authMiddleware, optionalAuth } from './middleware/auth';
 import { createAuthRouter } from './routes/auth';
 import { createGamesRouter } from './routes/games';
-
-interface Env {
-  DB: D1Database;
-  ENVIRONMENT: string;
-  JWT_SECRET?: string;
-}
+import { Env, HonoEnv } from './types';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const app = new Hono<{ Bindings: Env }>();
+    const app = new Hono<HonoEnv>();
 
     // Global middleware
     app.use(logger());
@@ -46,7 +40,7 @@ export default {
     });
 
     // API Routes
-    const apiApp = new Hono<{ Bindings: Env }>();
+    const apiApp = new Hono<HonoEnv>();
 
     // Auth routes (public)
     const authRouter = createAuthRouter(env.DB);

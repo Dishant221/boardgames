@@ -18,7 +18,10 @@
     "test:backend": "cd packages/backend && npm run test",
     "lint": "npm run lint:frontend && npm run lint:backend",
     "lint:frontend": "cd packages/frontend && npm run lint",
-    "lint:backend": "cd packages/backend && npm run lint"
+    "lint:backend": "cd packages/backend && npm run lint",
+    "type-check": "npm run type-check:frontend && npm run type-check:backend",
+    "type-check:frontend": "cd packages/frontend && npm run type-check",
+    "type-check:backend": "cd packages/backend && npm run type-check"
   },
   "keywords": [
     "board-games",

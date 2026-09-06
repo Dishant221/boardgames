@@ -1,4 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types';
+import { User, GameSessionRow, PlayerStats, LeaderboardEntry } from '../types';
 
 export interface DBContext {
   db: D1Database;
@@ -28,7 +29,7 @@ export async function executeUpdate(
 }
 
 export async function getUserById(db: D1Database, userId: string) {
-  const results = await executeQuery(
+  const results = await executeQuery<Omit<User, 'password_hash'>>(
     db,
     'SELECT id, username, email, avatar_url, created_at, updated_at, last_login, is_active FROM users WHERE id = ?',
     [userId]
@@ -37,7 +38,7 @@ export async function getUserById(db: D1Database, userId: string) {
 }
 
 export async function getUserByEmail(db: D1Database, email: string) {
-  const results = await executeQuery(
+  const results = await executeQuery<User>(
     db,
     'SELECT id, username, email, password_hash, avatar_url, created_at, updated_at, last_login, is_active FROM users WHERE email = ?',
     [email]
@@ -46,7 +47,7 @@ export async function getUserByEmail(db: D1Database, email: string) {
 }
 
 export async function getUserByUsername(db: D1Database, username: string) {
-  const results = await executeQuery(
+  const results = await executeQuery<Omit<User, 'password_hash'>>(
     db,
     'SELECT id, username, email, avatar_url, created_at, updated_at, is_active FROM users WHERE username = ?',
     [username]
@@ -69,7 +70,7 @@ export async function createUser(
 }
 
 export async function getGameSession(db: D1Database, sessionId: string) {
-  const results = await executeQuery(
+  const results = await executeQuery<GameSessionRow>(
     db,
     'SELECT * FROM game_sessions WHERE id = ?',
     [sessionId]
@@ -78,7 +79,7 @@ export async function getGameSession(db: D1Database, sessionId: string) {
 }
 
 export async function getActiveGameSessions(db: D1Database, limit = 50) {
-  return executeQuery(
+  return executeQuery<GameSessionRow>(
     db,
     'SELECT * FROM game_sessions WHERE status IN ("waiting", "playing") ORDER BY created_at DESC LIMIT ?',
     [limit]
@@ -104,21 +105,30 @@ export async function updateGameSession(
   sessionId: string,
   status: string,
   boardStateJson: string,
-  winnerId?: string
+  winnerId?: string,
+  playersJson?: string
 ) {
-  const query = winnerId
-    ? 'UPDATE game_sessions SET status = ?, board_state = ?, winner_id = ?, ended_at = datetime("now") WHERE id = ?'
-    : 'UPDATE game_sessions SET status = ?, board_state = ? WHERE id = ?';
+  const setClauses = ['status = ?', 'board_state = ?'];
+  const params: (string | undefined)[] = [status, boardStateJson];
 
-  const params = winnerId
-    ? [status, boardStateJson, winnerId, sessionId]
-    : [status, boardStateJson, sessionId];
+  if (playersJson !== undefined) {
+    setClauses.push('players = ?');
+    params.push(playersJson);
+  }
 
+  if (winnerId) {
+    setClauses.push('winner_id = ?', 'ended_at = datetime("now")');
+    params.push(winnerId);
+  }
+
+  params.push(sessionId);
+
+  const query = `UPDATE game_sessions SET ${setClauses.join(', ')} WHERE id = ?`;
   return executeUpdate(db, query, params);
 }
 
 export async function getPlayerStats(db: D1Database, userId: string) {
-  const results = await executeQuery(
+  const results = await executeQuery<PlayerStats>(
     db,
     'SELECT * FROM player_stats WHERE user_id = ?',
     [userId]
@@ -172,7 +182,7 @@ export async function getLeaderboard(
   gameType: string,
   limit = 100
 ) {
-  return executeQuery(
+  return executeQuery<LeaderboardEntry>(
     db,
     'SELECT * FROM leaderboard WHERE game_type = ? ORDER BY rank ASC LIMIT ?',
     [gameType, limit]

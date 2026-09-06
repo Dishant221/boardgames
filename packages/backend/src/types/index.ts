@@ -1,3 +1,18 @@
+import { D1Database } from '@cloudflare/workers-types';
+
+export interface Env extends Record<string, unknown> {
+  DB: D1Database;
+  ENVIRONMENT: string;
+  JWT_SECRET?: string;
+}
+
+export interface HonoEnv {
+  Bindings: Env;
+  Variables: {
+    user?: AuthPayload;
+  };
+}
+
 // User Types
 export interface User {
   id: string;
@@ -24,6 +39,19 @@ export interface GameSession {
   status: 'waiting' | 'playing' | 'completed';
   players: GamePlayer[];
   board_state: MonopolyBoardState;
+  created_at: string;
+  started_at?: string;
+  ended_at?: string;
+  winner_id?: string;
+}
+
+// Raw D1 row shape: players/board_state are stored as JSON strings
+export interface GameSessionRow {
+  id: string;
+  game_type: 'monopoly';
+  status: 'waiting' | 'playing' | 'completed';
+  players: string;
+  board_state: string;
   created_at: string;
   started_at?: string;
   ended_at?: string;

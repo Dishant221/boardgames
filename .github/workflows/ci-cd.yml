@@ -79,13 +79,13 @@ jobs:
         run: npm run build:backend
 
       - name: Upload frontend artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
           path: packages/frontend/dist
 
       - name: Upload backend artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-dist
           path: packages/backend/dist
@@ -94,7 +94,7 @@ jobs:
     name: Deploy to Testing Worker
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/testing' || github.ref == 'refs/heads/feature/**'
+    if: github.ref == 'refs/heads/testing' || startsWith(github.ref, 'refs/heads/feature/')
 
     steps:
       - uses: actions/checkout@v4
@@ -109,7 +109,7 @@ jobs:
         run: npm ci && cd packages/backend && npm ci
 
       - name: Download backend artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: backend-dist
           path: packages/backend/dist
@@ -143,7 +143,7 @@ jobs:
         run: npm ci && cd packages/backend && npm ci
 
       - name: Download backend artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: backend-dist
           path: packages/backend/dist

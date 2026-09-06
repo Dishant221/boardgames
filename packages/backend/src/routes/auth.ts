@@ -9,10 +9,10 @@ import {
   getUserById,
   createPlayerStats
 } from '../utils/db';
-import { LoginRequest, SignupRequest, User, ApiResponse } from '../types';
+import { LoginRequest, SignupRequest, User, ApiResponse, HonoEnv } from '../types';
 
 export function createAuthRouter(db: D1Database) {
-  const router = new Hono();
+  const router = new Hono<HonoEnv>();
 
   router.post('/signup', async (c) => {
     try {
@@ -64,7 +64,7 @@ export function createAuthRouter(db: D1Database) {
       // Generate token
       const token = generateToken({ userId, email, username });
 
-      const response: ApiResponse<{ token: string; user: Omit<User, 'password_hash'> }> = {
+      const response: ApiResponse<{ token: string; user: Pick<User, 'id' | 'email' | 'username'> }> = {
         success: true,
         data: {
           token,
@@ -122,7 +122,7 @@ export function createAuthRouter(db: D1Database) {
         username: user.username
       });
 
-      const response: ApiResponse<{ token: string; user: Omit<User, 'password_hash'> }> = {
+      const response: ApiResponse<{ token: string; user: Pick<User, 'id' | 'email' | 'username'> }> = {
         success: true,
         data: {
           token,
@@ -135,8 +135,7 @@ export function createAuthRouter(db: D1Database) {
       };
 
       return c.json(response);
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (_error) {
       return c.json(
         { success: false, error: 'Internal server error' },
         500
@@ -168,8 +167,7 @@ export function createAuthRouter(db: D1Database) {
       };
 
       return c.json(response);
-    } catch (error) {
-      console.error('Get user error:', error);
+    } catch (_error) {
       return c.json(
         { success: false, error: 'Internal server error' },
         500
