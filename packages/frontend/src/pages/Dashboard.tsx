@@ -149,7 +149,7 @@ export default function Dashboard() {
                   <div className="bg-gray-100 rounded p-2 mb-4">
                     <p className="text-xs font-bold text-gray-700">Players:</p>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {session.players.map((player: any) => (
+                      {session.players.map((player: Record<string, unknown>) => (
                         <span
                           key={player.userId}
                           className={`inline-block w-3 h-3 rounded-full`}

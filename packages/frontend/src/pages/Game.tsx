@@ -82,7 +82,7 @@ export default function Game() {
           <div className="mb-8">
             <h3 className="text-lg font-bold mb-4">Players ({currentSession.players.length}/4)</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {currentSession.players.map((player: any) => (
+              {currentSession.players.map((player: Record<string, unknown>) => (
                 <div
                   key={player.userId}
                   className="border-2 rounded-lg p-4"
