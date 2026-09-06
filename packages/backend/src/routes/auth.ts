@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { hash } from 'bcryptjs';
+import { hash, compare } from 'bcryptjs';
 import { D1Database } from '@cloudflare/workers-types';
-import { generateToken } from '../utils/jwt';
+import { generateToken, DEV_JWT_SECRET } from '../utils/jwt';
 import {
   getUserByEmail,
   getUserByUsername,
@@ -62,7 +62,7 @@ export function createAuthRouter(db: D1Database) {
       await createPlayerStats(db, userId);
 
       // Generate token
-      const token = generateToken({ userId, email, username });
+      const token = await generateToken({ userId, email, username }, c.env.JWT_SECRET || DEV_JWT_SECRET);
 
       const response: ApiResponse<{ token: string; user: Pick<User, 'id' | 'email' | 'username'> }> = {
         success: true,
@@ -105,9 +105,7 @@ export function createAuthRouter(db: D1Database) {
         );
       }
 
-      // Note: In production, use compare from bcryptjs
-      // For now, this is a placeholder that would need bcryptjs.compare
-      const passwordMatch = password === 'demo'; // TEMPORARY - replace with real comparison
+      const passwordMatch = await compare(password, user.password_hash ?? '');
 
       if (!passwordMatch) {
         return c.json(
@@ -116,11 +114,11 @@ export function createAuthRouter(db: D1Database) {
         );
       }
 
-      const token = generateToken({
+      const token = await generateToken({
         userId: user.id,
         email: user.email,
         username: user.username
-      });
+      }, c.env.JWT_SECRET || DEV_JWT_SECRET);
 
       const response: ApiResponse<{ token: string; user: Pick<User, 'id' | 'email' | 'username'> }> = {
         success: true,
