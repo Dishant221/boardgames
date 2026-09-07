@@ -13,7 +13,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "hono": "^3.11.0",
+    "hono": "^4.6.0",
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
     "bcryptjs": "^2.4.3",
     "@cloudflare/workers-types": "^4.20240815.0"

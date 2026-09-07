@@ -20,7 +20,9 @@ export default {
             'http://localhost:5173',
             'https://www.boardgamesepic.com',
             'https://boardgamesepic.com',
-            'https://test.boardgamesepic.com'
+            'https://test.boardgamesepic.com',
+            'https://boardgames-frontend-prod.sarkkarijobseva.workers.dev',
+            'https://boardgames-frontend-testing.sarkkarijobseva.workers.dev'
           ];
           return allowedOrigins.includes(origin) ? origin : null;
         },

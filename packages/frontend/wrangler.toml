@@ -1,0 +1,18 @@
+name = "boardgames-frontend"
+compatibility_date = "2024-09-06"
+account_id = "05607df215f6fbb6d85e742ca0e6bc59"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+
+# Production Environment
+# NOTE: no `routes` yet - boardgamesepic.com is not added as a zone on this
+# Cloudflare account. Deploys to the default *.workers.dev subdomain until
+# the domain is registered and added here.
+[env.production]
+name = "boardgames-frontend-prod"
+
+# Testing/Staging Environment
+[env.testing]
+name = "boardgames-frontend-testing"
