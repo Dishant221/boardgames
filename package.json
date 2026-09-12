@@ -1,7 +1,7 @@
 {
-  "name": "boardgames-epic",
+  "name": "grand-tour",
   "version": "0.1.0",
-  "description": "Multiplayer board games platform - www.boardgamesepic.com",
+  "description": "Grand Tour - itinerary, destination guide and local AI travel assistant on Cloudflare (multi-tenant, free tier)",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "build": "npm run build:backend && npm run build:frontend",
     "build:frontend": "cd packages/frontend && npm run build",
     "build:backend": "cd packages/backend && npm run build",
-    "deploy": "npm run build && npm run deploy:backend",
+    "deploy": "npm run build && npm run deploy:backend && npm run deploy:frontend",
     "deploy:backend": "cd packages/backend && npm run deploy",
     "test": "npm run test:frontend && npm run test:backend",
     "test:frontend": "cd packages/frontend && npm run test",
@@ -21,14 +21,20 @@
     "lint:backend": "cd packages/backend && npm run lint",
     "type-check": "npm run type-check:frontend && npm run type-check:backend",
     "type-check:frontend": "cd packages/frontend && npm run type-check",
-    "type-check:backend": "cd packages/backend && npm run type-check"
+    "type-check:backend": "cd packages/backend && npm run type-check",
+    "db:migrate:local": "cd packages/backend && npm run db:migrate:local",
+    "db:migrate:testing": "cd packages/backend && npm run db:migrate:testing",
+    "db:migrate:production": "cd packages/backend && npm run db:migrate:production",
+    "deploy:frontend": "cd packages/frontend && npm run deploy"
   },
   "keywords": [
-    "board-games",
-    "multiplayer",
-    "monopoly",
-    "gaming",
-    "cloudflare"
+    "travel",
+    "itinerary",
+    "ai-assistant",
+    "cloudflare",
+    "workers",
+    "durable-objects",
+    "openstreetmap"
   ],
   "author": "Dishant221",
   "license": "MIT",

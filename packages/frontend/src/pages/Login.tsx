@@ -1,81 +1,71 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Compass } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import Painting from '../components/Painting';
+import { pickArt } from '../lib/art';
+import { ErrorNote } from '../components/Section';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const art = pickArt('hero', new Date().getDate());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/');
     } catch {
-      // Error is already set in store
+      /* error shown from store */
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-primary mb-2 text-center">BoardGamesEpic</h1>
-        <p className="text-center text-gray-600 mb-8">Play Classic Board Games Online</p>
+    <div className="gallery-wall-dark min-h-screen">
+      <div className="relative z-[1] mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-6 py-10 lg:grid-cols-2">
+        <div className="hidden lg:block animate-rise-in">
+          <Painting art={art} ornate width={1400} />
+        </div>
+        <div className="marble-dark animate-fade-in p-8 shadow-frame sm:p-10">
+          <div className="mb-8 flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-sm border border-gilt/70 bg-gradient-to-br from-gilt to-gold text-ink">
+              <Compass size={22} />
+            </span>
+            <div>
+              <h1 className="h-display text-xl leading-tight">
+                Grand <span className="text-gilt">Tour</span>
+              </h1>
+              <p className="font-serif text-sm italic text-ivory/70">Your local guide, in your pocket.</p>
+            </div>
+          </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-            <button
-              onClick={clearError}
-              className="ml-2 text-xs font-bold"
-            >
-              ✕
+          <ErrorNote message={error} onClose={clearError} />
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="field text-ivory/70">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" placeholder="you@example.com" required autoComplete="email" />
+            </div>
+            <div>
+              <label className="field text-ivory/70">Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" placeholder="••••••••" required autoComplete="current-password" />
+            </div>
+            <button type="submit" disabled={isLoading} className="btn-gilt w-full">
+              {isLoading ? 'Opening the doors…' : 'Enter the gallery'}
             </button>
-          </div>
-        )}
+          </form>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-bold mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-bold mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="button-primary w-full"
-          >
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don&apos;t have an account?{' '}
-            <Link to="/signup" className="text-primary hover:text-secondary font-bold">
-              Sign up here
+          <p className="mt-6 text-center font-serif text-sm text-ivory/70">
+            New traveller?{' '}
+            <Link to="/signup" className="text-gilt underline-offset-2 hover:underline">
+              Create your atlas
             </Link>
+          </p>
+          <p className="mt-8 text-center text-[11px] text-ivory/40">
+            Each account gets its own private workspace and a fair daily share of the free tier.
           </p>
         </div>
       </div>

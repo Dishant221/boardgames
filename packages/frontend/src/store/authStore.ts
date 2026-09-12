@@ -1,45 +1,45 @@
 import { create } from 'zustand';
-import { AxiosError } from 'axios';
-import { authApi } from '../utils/api';
-
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatar_url?: string;
-}
+import { authApi, preferencesApi, errorMessage } from '../utils/api';
+import type { Preferences, Tenant, User } from '../lib/types';
 
 interface AuthStore {
   user: User | null;
+  tenant: Tenant | null;
+  preferences: Preferences | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isBooting: boolean;
   error: string | null;
 
-  signup: (email: string, username: string, password: string) => Promise<void>;
+  signup: (email: string, username: string, password: string, homeCity?: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
+  updatePreferences: (patch: Record<string, unknown>) => Promise<void>;
   clearError: () => void;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
+  tenant: null,
+  preferences: null,
   isAuthenticated: false,
   isLoading: false,
+  isBooting: true,
   error: null,
 
-  signup: async (email, username, password) => {
+  signup: async (email, username, password, homeCity) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await authApi.signup(email, username, password);
-      const { token, user } = response.data.data;
+      const res = await authApi.signup(email, username, password, homeCity);
+      const { token, user, tenant } = res.data.data;
       localStorage.setItem('authToken', token);
-      set({ user, isAuthenticated: true });
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Signup failed';
-      set({ error: message });
-      throw error;
+      set({ user, tenant, isAuthenticated: true });
+      const me = await authApi.getProfile();
+      set({ user: me.data.data, tenant: me.data.data.tenant, preferences: me.data.data.preferences });
+    } catch (err) {
+      set({ error: errorMessage(err, 'Signup failed') });
+      throw err;
     } finally {
       set({ isLoading: false });
     }
@@ -48,15 +48,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
   login: async (email, password) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await authApi.login(email, password);
-      const { token, user } = response.data.data;
+      const res = await authApi.login(email, password);
+      const { token, user, tenant } = res.data.data;
       localStorage.setItem('authToken', token);
-      set({ user, isAuthenticated: true });
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError;
-      const message = (axiosError.response?.data as Record<string, string>)?.error || 'Login failed';
-      set({ error: message });
-      throw error;
+      set({ user, tenant, isAuthenticated: true });
+      const me = await authApi.getProfile();
+      set({ user: me.data.data, tenant: me.data.data.tenant, preferences: me.data.data.preferences });
+    } catch (err) {
+      set({ error: errorMessage(err, 'Login failed') });
+      throw err;
     } finally {
       set({ isLoading: false });
     }
@@ -64,23 +64,29 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   logout: () => {
     localStorage.removeItem('authToken');
-    set({ user: null, isAuthenticated: false });
+    set({ user: null, tenant: null, preferences: null, isAuthenticated: false });
   },
 
   checkAuth: async () => {
     try {
       const token = localStorage.getItem('authToken');
       if (!token) {
-        set({ isAuthenticated: false });
+        set({ isAuthenticated: false, isBooting: false });
         return;
       }
-
-      const response = await authApi.getProfile();
-      set({ user: response.data.data, isAuthenticated: true });
-    } catch (error) {
+      const res = await authApi.getProfile();
+      set({ user: res.data.data, tenant: res.data.data.tenant, preferences: res.data.data.preferences, isAuthenticated: true });
+    } catch {
       localStorage.removeItem('authToken');
       set({ isAuthenticated: false, user: null });
+    } finally {
+      set({ isBooting: false });
     }
+  },
+
+  updatePreferences: async (patch) => {
+    const res = await preferencesApi.update(patch);
+    set({ preferences: res.data.data });
   },
 
   clearError: () => set({ error: null })

@@ -1,72 +1,78 @@
-# BoardGamesEpic - Backlog
+# Grand Tour - Backlog
 
-**Last Updated:** 2026-09-07
-**Purpose:** Tracks what's actually built vs. what's still pending. See `INSTRUCTIONS.md` for the full product/architecture spec this backlog is scoped against.
+**Last Updated:** 2026-09-12
+**Purpose:** Tracks what's actually built vs. what's still pending. See `INSTRUCTIONS.md` for the product/architecture spec this backlog is scoped against, and `docs/MULTI_TENANCY.md` for the budget model.
+
+> **Pivot note (2026-09-12):** the Monopoly app was replaced by Grand Tour - itinerary, destination guide and local AI assistant. Infrastructure (Cloudflare account, Worker names `boardgames-*`, D1/KV ids, CI/CD, auth) was kept as-is. Old game tables from migration 001 remain in D1, unused.
 
 ---
 
-## Monopoly Game Status: 🔴 Not Playable Yet
+## Status: 🟢 Feature-complete MVP, not yet deployed after the pivot
 
-What exists today is **lobby/session management only** — there is no actual Monopoly gameplay.
+**Built (backend, `packages/backend`):**
+- Multi-tenancy: one tenant per user (`tenants` table + JWT `tenantId`), one private `TenantAgent` Durable Object per tenant (SQLite) for quota counters, conversations, live location; `ProjectLedger` DO enforcing the project-wide 40% share of the free tier; `quotaMiddleware` returning 429 + `Retry-After`. Config via `PROJECT_SHARE`, `TENANT_CAPACITY`, `SYSTEM_RESERVE`.
+- Auth: signup/login/me with tenant provisioning (lazy for pre-pivot accounts), stricter validation.
+- Preferences: home city (geocoded), preferred search engine, units, language, currency, interests, voice toggle, live location sharing.
+- Places: geocode/reverse (Nominatim), nearby POIs in 17 categories (Overpass), free-text find (Google Places optional), Wikipedia landmarks nearby, walking/cycling/driving directions (OSRM), saved places.
+- Destination guide: Wikivoyage/Wikipedia summary, 7-day weather, country essentials (currency, languages, dialling code, driving side, emergency numbers, plugs), phrase kit, sights/food/transit, live events (Ticketmaster optional), booking & search deep links, art keyword for the UI.
+- Trips: CRUD trips/days/stops, reorder, walking legs per day, **AI auto-plan** grounded in real POIs + forecast with deterministic fallback.
+- Assistant: `/assistant/chat` pipeline - regex intent detection → location resolution (mentioned place > live GPS > home) → parallel grounding (weather, POIs, wiki, route) → deep links for the user's engine/booking sites → LLM reply (Workers AI default, Anthropic optional) → structured cards. Weather questions answered without the LLM. Chat and call modes.
+- Discover: weather, events (venues + listings), booking-intent suggestions, usage dashboard data.
+- Security headers (Hono `secureHeaders`), CORS allow-list, Hono app built once at module scope (old per-request rebuild debt fixed).
+- Unit tests (27) for the budget model, intent classifier, deep links, polyline decoding, JSON extraction. Backend upgraded to Wrangler 4 + current workers-types.
 
-**Built:**
-- Create a game session, join a session (up to 4 players, color assignment)
-- Session state persisted in D1 (`game_sessions` table) as JSON
-- Board initialized with 40 empty properties (`owner: null, houses: 0, hotels: 0, mortgaged: false`) and each player starts with $1500
-- Frontend lobby (Dashboard) lists open sessions and lets you create/join one
-- Frontend Game page shows the player list, their money, and status
+**Built (frontend, `packages/frontend`):**
+- Gallery-wall design system: plaster/marble textures, gilt frames, Cinzel/Cormorant/Inter, public-domain paintings of Rome, Venice, Florence, Paris etc. from Wikimedia Commons, museum placards.
+- Pages: Login, Signup, Atrium (home), Explore (Leaflet map + categories + saved places + Wikipedia landmarks), Guide, Itineraries list + Trip detail (day tabs, stop editor with place lookup, reorder, walking legs on map, AI auto-plan), Assistant (chat + **call mode** with Web Speech recognition/synthesis and an animated orb), Bookings (intent forms → deep links + tips), Events, Settings (preferences + usage meters + project table).
+- Browser geolocation store shared across pages; position sent only to the user's own tenant DO.
 
-**NOT built (i.e., you cannot actually play):**
-- No dice rolling endpoint or logic
-- No turn/move logic (advancing a player around the board)
-- No property purchase, rent collection, or mortgage logic
-- No Chance/Community Chest card system (arrays exist in the schema, always empty)
-- No jail logic
-- No win condition / bankruptcy handling
-- The "Start Game" button on the Game page has no handler — it does nothing when clicked
-- The board itself is a placeholder div that says "Game board rendering coming soon" — no visual board, no tokens, no property tiles
-- No real-time sync between players (see Durable Objects below) — two players in the same session would each need to manually refresh to see any change, and there's no change to see yet anyway
+**Built (ops):**
+- `wrangler.toml`: AI binding, two DO bindings + SQLite migration, per-env vars, local dev bindings, `migrations_dir`.
+- CI applies D1 migrations before deploying the backend (testing + production).
+- Docs: `INSTRUCTIONS.md` (new spec), `docs/MULTI_TENANCY.md`, `docs/API.md`, README.
 
 ---
 
 ## Pending Work
 
-### High priority — needed before Monopoly is playable at all
-- [ ] **Game engine**: turn cycle (roll → move → buy/pass/mortgage → next player), implemented server-side (client must not be trusted with dice results or money)
-- [ ] **Durable Objects for real-time multiplayer** — `wrangler.toml` has no Durable Objects binding right now (removed during the Sept 2026 deploy fixes because the `GameSession` class it referenced was never implemented). Needs: a `GameSession` DO class, WebSocket handling, migration entry in `wrangler.toml`, and a way for the frontend to open a WS connection per session.
-- [ ] **Monopoly board UI** — replace the placeholder with an actual rendered board (Canvas or Pixi.js per `INSTRUCTIONS.md`), property tiles, player tokens, dice animation
-- [ ] Wire the "Start Game" button to actually transition `status: waiting → playing` and kick off the first turn
-- [ ] Card system: fill in the 17 Chance + 17 Community Chest cards and their effects
+### High priority - before/at first deploy
+- [ ] **Deploy & verify on testing**: push to `testing`, confirm CI applies `002_travel_pivot.sql`, DO migration `v1` succeeds, `/health` shows `ai_provider`, sign up, chat once (Workers AI). Then promote to `main`.
+- [ ] **Set secrets** per env: `JWT_SECRET` (already), optional `ANTHROPIC_API_KEY`, `GOOGLE_MAPS_API_KEY`, `TICKETMASTER_API_KEY` (`wrangler secret put NAME --env testing|production`).
+- [ ] Measure real Workers AI neuron usage in the dashboard for a few chats and calibrate `estimateNeurons()` rates (currently derived from list prices, rounded up).
+- [ ] Old tokens: users logged in before the pivot get a 401 asking them to log in again (tenant gets provisioned on login). Communicate if there are real users.
 
-### Medium priority — infrastructure/ops gaps
-- [ ] **R2 not enabled** — requires a one-time manual click-through in the Cloudflare dashboard (no API/CLI workaround exists). Needed before any asset upload (sprites, sounds, 3D models) can work. Once enabled, re-add the R2 bucket bindings to `packages/backend/wrangler.toml` (removed during the Sept 2026 fixes) and `packages/frontend` if it ends up serving assets too.
-- [ ] **Custom domain** — `boardgamesepic.com` is not registered/added as a zone on the Cloudflare account (`sarkkarijobseva@gmail.com`, 0 zones exist). Everything currently runs on `*.workers.dev` URLs. Once the domain is added as a zone, re-add `routes` to both `packages/backend/wrangler.toml` and `packages/frontend/wrangler.toml`.
-- [ ] Dev environment D1 database / KV namespace — only `testing` and `production` were provisioned; local `wrangler dev` has no bound resources yet
-- [ ] Tests — Vitest is configured in both packages but zero actual test files exist (`--passWithNoTests` is what's keeping CI green)
-- [ ] Rate limiting (mentioned in `INSTRUCTIONS.md` security section, not implemented)
-- [ ] CSP / security headers on responses
-- [ ] Upgrade Wrangler in the backend package too (it's still pinned to `^3.26.0`; frontend is on `^4.6.0`) — keeping both on the same major version would avoid the Node-version mismatch class of bug we just fixed
+### Medium priority
+- [ ] Streaming assistant replies (SSE) for snappier chat; call mode would speak sentence-by-sentence.
+- [ ] Wikivoyage section extraction (Get in / Get around / Stay safe) instead of only the summary.
+- [ ] OSRM demo server is rate-limited; self-host or swap to another free router if directions traffic grows.
+- [ ] Tests for routes with a mocked D1/DO (currently only pure-function tests); Vitest workers pool.
+- [ ] R2 still not enabled on the account (manual dashboard step) - needed only if we later host our own images/audio.
+- [ ] Custom domain still not on the account; everything runs on `*.workers.dev`.
+- [ ] Dev D1/KV are local-only placeholders in `wrangler.toml`; fine for `wrangler dev --local`.
+- [ ] Rate limiting per IP for unauthenticated auth endpoints (tenant quota covers authenticated traffic).
+- [ ] Nominatim policy: 1 req/s - add a tiny per-colo throttle if geocode traffic spikes (cache already 7 days).
+- [ ] Overpass occasionally returns empty sets when several queries run concurrently (seen locally for `food` and `events` around Rome while `sights`/`transit` succeeded). Add retry-with-backoff and/or run the guide's POI queries sequentially.
 
 ### Feature gaps vs. `INSTRUCTIONS.md`
-- [ ] Password reset / email verification (Cloudflare Email Routing — nothing wired up)
-- [ ] 2FA (optional per spec)
-- [ ] OAuth2 (GitHub/Google) login
-- [ ] Player stats page / leaderboard UI (backend has the DB tables and a `getLeaderboard` query helper, but no route exposes it and no frontend page shows it)
-- [ ] Sound design / background music (Howler.js per spec — nothing added)
-- [ ] Animations beyond basic Tailwind transitions (dice roll, token movement, victory celebration — all listed in spec, none built)
-- [ ] SEO: meta tags, Open Graph, sitemap.xml, robots.txt, structured data
-- [ ] Accessibility audit (WCAG 2.1 AA target per spec)
-- [ ] GDPR/CCPA data controls, Terms of Service, Privacy Policy content
-- [ ] Game assets — no sprites, tokens, dice images, property card art exist yet
+- [ ] Offline/PWA mode with cached guide + itinerary for roaming without data.
+- [ ] Share/export itinerary (ICS calendar, PDF, public read-only link).
+- [ ] Group trips (invite another tenant to a trip) - would need cross-tenant ACLs.
+- [ ] Currency conversion (frankfurter.app is free) in the guide and stops' cost estimates.
+- [ ] Translate-a-menu / live translation in call mode.
+- [ ] Password reset / email verification (Cloudflare Email Routing), OAuth login, 2FA.
+- [ ] SEO for public pages (landing, guides), accessibility audit (WCAG 2.1 AA), privacy policy & terms.
+- [ ] Analytics of intent distribution to tune the classifier and card layouts.
 
-### Documentation gaps (listed as required in `INSTRUCTIONS.md` section 13)
-- [ ] API documentation (OpenAPI/Swagger)
-- [ ] Game Rules document (Monopoly rules + house rules + edge cases)
-- [ ] Architecture Decision Records (ADRs)
-- [ ] Contributing guidelines
+### Documentation gaps
+- [ ] OpenAPI spec generated from routes (docs/API.md is hand-written).
+- [ ] ADRs: why DO-per-tenant, why Cache API over KV, why deep links over paid booking APIs.
+- [ ] Contributing guidelines.
 
 ---
 
 ## Known Debt / Things to Revisit
-- `packages/backend/src/index.ts` rebuilds the entire Hono app (new instance, all middleware, all routes) on **every single request** inside the `fetch()` handler, instead of constructing it once at module scope. Works correctly, just wasteful — worth refactoring once the request volume matters.
-- Backend and frontend are on different major Wrangler versions (3.x vs 4.x) purely by accident of when each was pinned — see infra gap above.
+- Intent detection is regex-based (fast, free, deterministic). It will misclassify creative phrasing; the LLM still answers correctly because grounding is additive, but cards may be less relevant. Consider a tiny classifier call when neurons allow.
+- `TenantAgent` fails **open** if the DO is unreachable (logs loudly). Decide if fail-closed is preferable once traffic is real.
+- `estimateNeurons()` is an estimate; Cloudflare's dashboard is the truth.
+- Painting URLs are hot-linked from Wikimedia Commons (`Special:FilePath`). Acceptable for public-domain works at this scale; mirror to R2 once R2 is enabled.
+- `packages/backend` build via esbuild is only used by CI's artifact step; `wrangler deploy` bundles from source itself.

@@ -1,32 +1,46 @@
 {
-  "name": "@boardgames/backend",
-  "version": "0.1.0",
-  "description": "Cloudflare Workers backend for BoardGamesEpic",
+  "name": "grand-tour",
+  "version": "0.2.0",
+  "description": "Grand Tour - itinerary, destination guide and local AI travel assistant on Cloudflare (multi-tenant, free tier)",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "wrangler dev",
-    "build": "esbuild src/index.ts --bundle --platform=node --target=es2020 --outfile=dist/index.js",
-    "deploy": "wrangler deploy",
+    "build": "esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --external:cloudflare:workers --outfile=dist/index.js",
+    "deploy": "npm run build && npm run deploy:backend && npm run deploy:frontend",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext ts",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "db:migrate:local": "cd packages/backend && npm run db:migrate:local",
+    "db:migrate:testing": "cd packages/backend && npm run db:migrate:testing",
+    "db:migrate:production": "cd packages/backend && npm run db:migrate:production",
+    "deploy:frontend": "cd packages/frontend && npm run deploy"
   },
   "dependencies": {
-    "hono": "^4.6.0",
+    "@anthropic-ai/sdk": "^0.125.0",
     "@tsndr/cloudflare-worker-jwt": "^2.5.3",
     "bcryptjs": "^2.4.3",
-    "@cloudflare/workers-types": "^4.20240815.0"
+    "hono": "^4.6.0"
   },
   "devDependencies": {
-    "wrangler": "^3.26.0",
-    "@types/node": "^20.10.0",
+    "@cloudflare/workers-types": "^5.20260911.1",
     "@types/bcryptjs": "^2.4.2",
-    "typescript": "^5.3.0",
-    "esbuild": "^0.19.0",
-    "eslint": "^8.55.0",
+    "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
-    "vitest": "^1.0.0"
-  }
+    "esbuild": "^0.19.0",
+    "eslint": "^8.55.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0",
+    "wrangler": "^4.6.0"
+  },
+  "keywords": [
+    "travel",
+    "itinerary",
+    "ai-assistant",
+    "cloudflare",
+    "workers",
+    "durable-objects",
+    "openstreetmap"
+  ]
 }

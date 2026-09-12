@@ -1,9 +1,11 @@
-# BoardGamesEpic Infrastructure Documentation
+# Grand Tour Infrastructure Documentation
 
-**Project:** www.boardgamesepic.com  
-**Status:** 🚀 In Development  
-**Last Updated:** 2026-09-07  
-**Architecture Version:** 1.0
+**Project:** Grand Tour (repo/resources keep the historical `boardgames` names)
+**Status:** 🚀 MVP implemented, pending first deploy after the 2026-09-12 pivot
+**Last Updated:** 2026-09-12
+**Architecture Version:** 2.0
+
+> **Pivot note:** This document was written for the Monopoly platform and still describes the shared foundation (Cloudflare account, Workers, D1, KV, CI/CD). The application-level architecture has changed: see `INSTRUCTIONS.md` (spec), `docs/MULTI_TENANCY.md` (Durable-Object-per-tenant + 40% budget) and `docs/API.md` (endpoints). Differences from the diagram below: the frontend is a Worker with static assets (not Pages); Durable Objects are `TenantAgent` (one per user) and `ProjectLedger` (singleton) rather than game rooms; Workers AI is bound as `AI`; upstream data is cached in the Workers Cache API; R2 is still not enabled.
 
 ---
 

@@ -29,10 +29,12 @@
       {
         "argsIgnorePattern": "^_"
       }
-    ]
+    ],
+    "no-undef": "off"
   },
   "ignorePatterns": [
     "dist",
-    "node_modules"
+    "node_modules",
+    "test"
   ]
 }

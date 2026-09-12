@@ -1,6 +1,6 @@
 # Security Guidelines
 
-This document outlines security best practices and compliance requirements for BoardGamesEpic.
+This document outlines security best practices and compliance requirements for Grand Tour.
 
 ## Authentication & Authorization
 
@@ -26,7 +26,7 @@ This document outlines security best practices and compliance requirements for B
 
 - Parameterized queries (no SQL injection)
 - Rate limiting on all endpoints
-- Server-side game state validation
+- Server-side intent grounding: the assistant only relays facts fetched from data providers; per-tenant + project-wide quotas (see docs/MULTI_TENANCY.md)
 - Audit logging for sensitive operations
 
 ## Compliance

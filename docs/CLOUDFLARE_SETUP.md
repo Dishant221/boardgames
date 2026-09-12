@@ -1,6 +1,12 @@
 # Cloudflare Setup Guide
 
-This guide walks through setting up all Cloudflare services for BoardGamesEpic.
+This guide walks through setting up all Cloudflare services for Grand Tour (resources keep the historical `boardgames-*` names).
+
+> **After the 2026-09-12 pivot, also:**
+> - Apply D1 migrations before deploying: `cd packages/backend && npm run db:migrate:testing` / `npm run db:migrate:production` (CI does this automatically).
+> - The first `wrangler deploy` runs Durable Object migration `v1` (creates `TenantAgent` and `ProjectLedger`, SQLite-backed - required on the Free plan).
+> - Workers AI is bound as `AI` (no setup needed). Optional secrets: `wrangler secret put ANTHROPIC_API_KEY|GOOGLE_MAPS_API_KEY|TICKETMASTER_API_KEY --env <env>`.
+> - Budget knobs live in `wrangler.toml` `[vars]`: `PROJECT_SHARE`, `TENANT_CAPACITY`, `SYSTEM_RESERVE`, `AI_MODEL`.
 
 ## Prerequisites
 

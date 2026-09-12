@@ -1,168 +1,59 @@
-# BoardGamesEpic.com
+# Grand Tour
 
-🎲 A nostalgic multiplayer board games platform built with modern web technologies.
+🧭 Itinerary planner, destination guide and **local AI travel assistant** you can chat with or *call*. Grounded in free open data (OpenStreetMap, Wikivoyage, Open-Meteo), dressed as a gallery of Rome and Europe, and built to live inside 40% of a Cloudflare free-tier account with a private workspace per user.
 
-**Website:** www.boardgamesepic.com
+> Repository and Cloudflare resources keep their historical `boardgames` names; the product inside is Grand Tour. See `BACKLOG.md` for the pivot note.
 
-## Project Overview
+## What it does
 
-BoardGamesEpic is a web-based platform where players can enjoy classic and modern board games in real-time multiplayer sessions. Built on Cloudflare's edge infrastructure for low-latency gaming experiences.
+- **Assistant (chat + call)** - "best gelato near me", "how do I get to the station?", "plan my afternoon", "cheap flights to Rome next weekend". Detects intent, resolves where you are, fetches real places/weather/routes, answers briefly and shows cards. Call mode uses the browser's speech recognition and voice.
+- **Explore** - map of what is around you in 17 categories + Wikipedia landmarks.
+- **Guide** - one-page destination briefing: background, forecast, currency, emergency numbers, plugs, phrases, sights, eats, transit, events, booking links.
+- **Itineraries** - trips → days → stops, AI auto-plan from real POIs and the forecast, walking legs on the map.
+- **Bookings** - flights, stays, tickets, trains, tables, shopping: pre-filled searches on your preferred engine and the major booking sites. No paid APIs.
+- **Events** - venues nearby and live listings (Ticketmaster optional).
+- **Settings** - preferences and a transparent usage dashboard.
 
-### Current Games
-- **Monopoly** (v1.0) - Classic property trading game with 2D graphics and 3D asset effects
+## Stack
 
-### Technology Stack
-- **Frontend:** React 18 + TypeScript + Tailwind CSS + Framer Motion
-- **Backend:** Cloudflare Workers + Durable Objects + D1
-- **Deployment:** Cloudflare Pages + GitHub Actions
-- **Real-time:** WebSockets via Durable Objects
-- **Storage:** Cloudflare R2 (assets) + D1 (data)
-
-## Project Structure
+React 18 + Vite + Tailwind + Leaflet · Cloudflare Workers (Hono) + D1 + Durable Objects (SQLite) + Workers AI + Cache API · optional Anthropic Claude, Google Places, Ticketmaster.
 
 ```
-boardgames/
-├── packages/
-│   ├── frontend/          # React web application
-│   ├── backend/           # Cloudflare Workers
-│   └── shared/            # Shared types and utilities
-├── .github/
-│   └── workflows/         # GitHub Actions CI/CD
-├── docs/                  # Documentation
-├── INSTRUCTIONS.md        # Complete project instructions
-└── README.md
+packages/
+├── frontend/   React app, deployed as a Worker with static assets
+└── backend/    Hono API Worker, TenantAgent + ProjectLedger Durable Objects, D1 migrations
+docs/
+├── MULTI_TENANCY.md   the 40% budget model and tenant isolation
+├── API.md             endpoint reference
+├── INFRASTRUCTURE.md, CLOUDFLARE_SETUP.md, SECURITY.md
+INSTRUCTIONS.md        product & architecture spec
+BACKLOG.md             what is built vs pending
 ```
 
-## Quick Start
+## Quick start
 
-### Prerequisites
-- Node.js 18+
-- Git
-- Cloudflare Account (Free tier)
-- GitHub Account
-
-### Development Setup
-
-1. **Clone repository:**
-   ```bash
-   git clone git@github.com:Dishant221/boardgames.git
-   cd boardgames
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   cd packages/frontend && npm install
-   cd ../backend && npm install
-   ```
-
-3. **Start development:**
-   ```bash
-   npm run dev
-   ```
-
-4. **Run tests:**
-   ```bash
-   npm run test
-   ```
-
-## Documentation
-
-- **[INSTRUCTIONS.md](./INSTRUCTIONS.md)** - Complete production instructions and specifications
-- **[docs/](./docs/)** - Additional documentation (API, architecture, security)
-
-## Branches
-
-- **`main`** - Production branch (www.boardgamesepic.com)
-- **`testing`** - Staging/QA branch (test.boardgamesepic.com)
-- **`feature/*`** - Feature branches for development
-
-## Deployment
-
-### GitHub Actions CI/CD Pipeline
-- Push to `feature/*` → Run tests on Testing Worker
-- PR to `testing` → Deploy to test.boardgamesepic.com
-- PR to `main` → Deploy to www.boardgamesepic.com (production)
-
-### Deploy Commands
 ```bash
-# Deploy to production (main)
-npm run deploy
-
-# Deploy to testing (testing branch)
-# Automatic via GitHub Actions
+npm install && (cd packages/frontend && npm install) && (cd packages/backend && npm install)
+cd packages/backend && npm run db:migrate:local && cd ../..
+npm run dev            # Vite :5173 + wrangler dev :8787
 ```
 
-## Security
+Sign up in the app (each signup provisions a tenant + its Durable Object). The assistant uses Workers AI, which needs `wrangler dev` in remote mode (drop `--local`) or an `ANTHROPIC_API_KEY`; otherwise it answers from data with a rules fallback.
 
-- ✅ HTTPS only
-- ✅ JWT authentication
-- ✅ Server-side game state validation
-- ✅ Rate limiting
-- ✅ Input sanitization
-- ✅ GDPR/CCPA compliant
-- ✅ CSP headers enforced
+Tests / checks: `npm run test`, `npm run type-check`, `npm run lint`.
 
-See [docs/SECURITY.md](./docs/SECURITY.md) for detailed security guidelines.
+## Deploy
 
-## Contributing
+CI (`.github/workflows/ci-cd.yml`) runs on `testing` and `main`: applies D1 migrations, deploys the backend (creating the Durable Objects), builds the frontend with the right `VITE_API_URL` and deploys it.
 
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Make changes and test locally
-3. Commit with clear message: `git commit -m "feat: description"`
-4. Push to GitHub: `git push origin feature/your-feature`
-5. Create Pull Request to `testing` branch
-6. After review, PR to `main` for production
+Secrets per environment (`wrangler secret put NAME --env testing|production`): `JWT_SECRET` (required), `ANTHROPIC_API_KEY`, `GOOGLE_MAPS_API_KEY`, `TICKETMASTER_API_KEY` (optional).
 
-## Architecture
+Live URLs (workers.dev): backend `boardgames-prod` / `boardgames-testing`, frontend `boardgames-frontend-prod` / `boardgames-frontend-testing` on the `sarkkarijobseva` subdomain.
 
-```
-User Browser
-    ↓
-Cloudflare Pages (CDN)
-    ↓
-React Frontend
-    ↓
-WebSocket (WSS)
-    ↓
-Cloudflare Durable Objects (Real-time multiplayer)
-    ↓
-Cloudflare D1 (Database)
-Cloudflare R2 (Assets)
-```
+## Budget & tenancy in one paragraph
 
-## Roadmap
-
-### Phase 1 (Current)
-- ✅ Monopoly game
-- ✅ Authentication (login/signup)
-- ✅ Multiplayer real-time sync
-- ✅ Game lobby
-
-### Phase 2
-- Additional games (Chess, Checkers, Scrabble)
-- Friends list
-- Achievement system
-- Leaderboard improvements
-
-### Phase 3
-- Mobile app (React Native)
-- Voice chat (WebRTC)
-- Tournament mode
-- Cosmetics/customization
-
-## Support
-
-For issues and questions:
-1. Check existing GitHub issues
-2. Create new issue with detailed description
-3. Contact via GitHub Issues
+Account free-tier limits × 0.40 = project budget (tracked by a `ProjectLedger` Durable Object). Minus a 10% system reserve, divided by `TENANT_CAPACITY` (25) = each user's daily allowance, tracked in their own `TenantAgent` Durable Object. Requests beyond either limit get `429` until 00:00 UTC. All upstream API responses are cached in the Workers Cache API so repeat questions are free. Details: `docs/MULTI_TENANCY.md`.
 
 ## License
 
-MIT License - See LICENSE file for details
-
----
-
-**Created:** 2026-09-07
-**Status:** 🚀 In Development
+MIT. Paintings are public-domain works served from Wikimedia Commons; map data © OpenStreetMap contributors.

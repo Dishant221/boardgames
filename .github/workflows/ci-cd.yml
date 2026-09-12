@@ -114,6 +114,14 @@ jobs:
           name: backend-dist
           path: packages/backend/dist
 
+      - name: Apply D1 migrations (Testing)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          cd packages/backend
+          npx wrangler d1 migrations apply boardgames-testing --env testing --remote
+
       - name: Deploy backend to Cloudflare (Testing)
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -161,6 +169,14 @@ jobs:
         with:
           name: backend-dist
           path: packages/backend/dist
+
+      - name: Apply D1 migrations (Production)
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          cd packages/backend
+          npx wrangler d1 migrations apply boardgames-prod --env production --remote
 
       - name: Deploy backend to Cloudflare (Production)
         env:

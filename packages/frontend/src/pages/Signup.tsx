@@ -1,119 +1,90 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Compass } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import Painting from '../components/Painting';
+import { pickArt } from '../lib/art';
+import { ErrorNote } from '../components/Section';
 
 export default function Signup() {
   const navigate = useNavigate();
   const { signup, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [homeCity, setHomeCity] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
+  const art = pickArt('venice', 1);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      alert('Password must be at least 8 characters');
-      return;
-    }
-
+    setLocalError(null);
+    if (password !== confirm) return setLocalError('Passwords do not match');
+    if (password.length < 8) return setLocalError('Password must be at least 8 characters');
     try {
-      await signup(email, username, password);
-      navigate('/dashboard');
+      await signup(email, username, password, homeCity || undefined);
+      navigate('/');
     } catch {
-      // Error is already set in store
+      /* error shown from store */
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-primary mb-2 text-center">BoardGamesEpic</h1>
-        <p className="text-center text-gray-600 mb-8">Create Your Account</p>
+    <div className="gallery-wall-dark min-h-screen">
+      <div className="relative z-[1] mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-6 py-10 lg:grid-cols-2">
+        <div className="marble-dark order-2 animate-fade-in p-8 shadow-frame sm:p-10 lg:order-1">
+          <div className="mb-6 flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-sm border border-gilt/70 bg-gradient-to-br from-gilt to-gold text-ink">
+              <Compass size={22} />
+            </span>
+            <div>
+              <h1 className="h-display text-xl leading-tight">Create your atlas</h1>
+              <p className="font-serif text-sm italic text-ivory/70">A private workspace, provisioned just for you.</p>
+            </div>
+          </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-            <button
-              onClick={clearError}
-              className="ml-2 text-xs font-bold"
-            >
-              ✕
+          <ErrorNote message={error ?? localError} onClose={() => { clearError(); setLocalError(null); }} />
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="field text-ivory/70">Username</label>
+                <input value={username} onChange={(e) => setUsername(e.target.value)} className="input" placeholder="marco.polo" required autoComplete="username" />
+              </div>
+              <div>
+                <label className="field text-ivory/70">Home city (optional)</label>
+                <input value={homeCity} onChange={(e) => setHomeCity(e.target.value)} className="input" placeholder="Venice" />
+              </div>
+            </div>
+            <div>
+              <label className="field text-ivory/70">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" placeholder="you@example.com" required autoComplete="email" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="field text-ivory/70">Password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required autoComplete="new-password" />
+              </div>
+              <div>
+                <label className="field text-ivory/70">Confirm</label>
+                <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="input" required autoComplete="new-password" />
+              </div>
+            </div>
+            <button type="submit" disabled={isLoading} className="btn-gilt w-full">
+              {isLoading ? 'Preparing your workspace…' : 'Begin the Grand Tour'}
             </button>
-          </div>
-        )}
+          </form>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-bold mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-bold mb-2">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="input-field"
-              placeholder="yourplayername"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-bold mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-bold mb-2">Confirm Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="button-primary w-full"
-          >
-            {isLoading ? 'Creating account...' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-primary hover:text-secondary font-bold">
-              Login here
+          <p className="mt-6 text-center font-serif text-sm text-ivory/70">
+            Already a member?{' '}
+            <Link to="/login" className="text-gilt underline-offset-2 hover:underline">
+              Log in
             </Link>
           </p>
+        </div>
+        <div className="order-1 hidden lg:order-2 lg:block animate-rise-in">
+          <Painting art={art} ornate width={1400} />
         </div>
       </div>
     </div>

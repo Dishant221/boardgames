@@ -1,62 +1,141 @@
+# Grand Tour backend - Cloudflare Worker (Hono) + D1 + KV + Workers AI + Durable Objects.
+# Worker/D1/KV names intentionally keep the original "boardgames-*" identifiers so the
+# existing Cloudflare resources, CI secrets and deploy URLs continue to work unchanged.
 name = "boardgames-workers"
 main = "src/index.ts"
 compatibility_date = "2024-09-06"
 account_id = "05607df215f6fbb6d85e742ca0e6bc59"
 
-# Build
-build = { command = "npm run build", cwd = "." }
-
-# Compatibility Flags
 compatibility_flags = [
   "nodejs_compat",
   "streams_enable_constructors"
 ]
 
-# Observability
 observability = { enabled = true }
 
-# NOTE: no `limits` (cpu_ms) - that field requires a paid Workers plan;
-# this project targets the Free tier.
+# NOTE: no `limits` (cpu_ms) - that field requires a paid Workers plan; this project
+# targets the Free tier and self-limits usage via the tenancy quota layer instead.
 
-# Dev Server Config
 [dev]
 ip = "0.0.0.0"
 port = 8787
 
-# Production Environment
-# NOTE: no `routes` yet - boardgamesepic.com is not added as a zone on this
-# Cloudflare account. Deploys to the default *.workers.dev subdomain until
-# the domain is registered and added here.
+# ---------------------------------------------------------------------------
+# Shared (all environments): tenancy budget knobs. See docs/MULTI_TENANCY.md.
+#   PROJECT_SHARE    - fraction of the Cloudflare Free-tier account limits this
+#                      project may consume (0.40 = 40%).
+#   TENANT_CAPACITY  - number of daily-active tenants the project budget is
+#                      divided between. Each new user = one tenant = one slice.
+#   SYSTEM_RESERVE   - fraction of the project budget kept back for un-tenanted
+#                      traffic (login, signup, health, static errors).
+# ---------------------------------------------------------------------------
+[vars]
+ENVIRONMENT = "development"
+PROJECT_SHARE = "0.40"
+TENANT_CAPACITY = "25"
+SYSTEM_RESERVE = "0.10"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
+APP_USER_AGENT = "GrandTour/0.2 (https://github.com/Dishant221/boardgames; travel assistant)"
+
+# Local dev bindings (wrangler dev --local uses on-disk SQLite / KV; ids are placeholders)
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "boardgames-dev"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "local-dev-cache"
+
+[[durable_objects.bindings]]
+name = "TENANT"
+class_name = "TenantAgent"
+
+[[durable_objects.bindings]]
+name = "PROJECT_LEDGER"
+class_name = "ProjectLedger"
+
+# Durable Object migrations apply to every environment. SQLite-backed classes are
+# required on the Workers Free plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TenantAgent", "ProjectLedger"]
+
+# ---------------------------------------------------------------------------
+# Production
+# NOTE: no `routes` yet - no custom domain zone exists on this account. Deploys to
+# the default *.workers.dev subdomain until a domain is registered and added here.
+# ---------------------------------------------------------------------------
 [env.production]
 name = "boardgames-prod"
-vars = { ENVIRONMENT = "production" }
+
+[env.production.vars]
+ENVIRONMENT = "production"
+PROJECT_SHARE = "0.40"
+TENANT_CAPACITY = "25"
+SYSTEM_RESERVE = "0.10"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
+APP_USER_AGENT = "GrandTour/0.2 (https://github.com/Dishant221/boardgames; travel assistant)"
+
+[env.production.ai]
+binding = "AI"
 
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "boardgames-prod"
 database_id = "68ee73a5-b1bf-4fcc-bff9-3c319c8b368d"
+migrations_dir = "migrations"
 
 [[env.production.kv_namespaces]]
 binding = "CACHE"
 id = "d4d532569c2940bd94cd97a252416323"
 
-# NOTE: R2 bucket bindings removed until R2 is enabled on this account
+[[env.production.durable_objects.bindings]]
+name = "TENANT"
+class_name = "TenantAgent"
+
+[[env.production.durable_objects.bindings]]
+name = "PROJECT_LEDGER"
+class_name = "ProjectLedger"
+
+# NOTE: R2 bucket bindings still omitted until R2 is enabled on this account
 # (requires a one-time manual acceptance in the Cloudflare dashboard).
 
-# NOTE: Durable Objects binding removed - the GameSession class referenced
-# here was never implemented in src/. Add it back (with a [[migrations]]
-# entry) once real-time multiplayer via Durable Objects is built.
-
-# Testing/Staging Environment
+# ---------------------------------------------------------------------------
+# Testing / Staging
+# ---------------------------------------------------------------------------
 [env.testing]
 name = "boardgames-testing"
-vars = { ENVIRONMENT = "testing" }
+
+[env.testing.vars]
+ENVIRONMENT = "testing"
+PROJECT_SHARE = "0.40"
+TENANT_CAPACITY = "25"
+SYSTEM_RESERVE = "0.10"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
+APP_USER_AGENT = "GrandTour/0.2 (https://github.com/Dishant221/boardgames; travel assistant)"
+
+[env.testing.ai]
+binding = "AI"
 
 [[env.testing.d1_databases]]
 binding = "DB"
 database_name = "boardgames-testing"
 database_id = "9e7a814c-2679-4df2-b936-55d3eed0d9f4"
+migrations_dir = "migrations"
 
 [[env.testing.kv_namespaces]]
 binding = "CACHE"
 id = "93d06c02bb1a4e37aa66eb18d47d650a"
+
+[[env.testing.durable_objects.bindings]]
+name = "TENANT"
+class_name = "TenantAgent"
+
+[[env.testing.durable_objects.bindings]]
+name = "PROJECT_LEDGER"
+class_name = "ProjectLedger"

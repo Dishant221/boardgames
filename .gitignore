@@ -43,3 +43,7 @@ yarn-error.log*
 *.tmp
 *.bak
 .cache/
+
+# Claude Code local state
+.claude/worktrees/
+.claude/settings.local.json
