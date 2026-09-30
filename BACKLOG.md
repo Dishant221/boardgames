@@ -36,7 +36,7 @@
 ## Pending Work
 
 ### High priority - before/at first deploy
-- [ ] **Deploy & verify on testing**: push to `testing`, confirm CI applies `002_travel_pivot.sql`, DO migration `v1` succeeds, `/health` shows `ai_provider`, sign up, chat once (Workers AI). Then promote to `main`.
+- [x] **Deploy & verify on testing** (2026-10-01): `testing` confirmed at `5f7a304`. `/health` returns `ai_provider: workers-ai` and correct 40% tenancy budget. Signup provisions tenant + DO. Chat verified both paths: weather question answered via rules (no LLM, 0 neurons) and an itinerary question via Workers AI (`@cf/meta/llama-3.1-8b-instruct-fast`, 21 neurons) with grounded weather/booking cards. Not yet promoted to `main`.
 - [ ] **Set secrets** per env: `JWT_SECRET` (already), optional `ANTHROPIC_API_KEY`, `GOOGLE_MAPS_API_KEY`, `TICKETMASTER_API_KEY` (`wrangler secret put NAME --env testing|production`).
 - [ ] Measure real Workers AI neuron usage in the dashboard for a few chats and calibrate `estimateNeurons()` rates (currently derived from list prices, rounded up).
 - [ ] Old tokens: users logged in before the pivot get a 401 asking them to log in again (tenant gets provisioned on login). Communicate if there are real users.
